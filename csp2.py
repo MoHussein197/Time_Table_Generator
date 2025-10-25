@@ -9,7 +9,7 @@ Outputs a valid timetable solution and a separate log of any lectures that could
 import pandas as pd
 import random
 from collections import defaultdict
-import sqlite3 # Keep for potential type hints, though not strictly needed
+import sqlite3
 
 # -------------------------
 # Load Excel file (FIXED)
@@ -38,8 +38,6 @@ def load_tables_excel():
         empty_df = pd.DataFrame()
         return empty_df, empty_df, empty_df, empty_df, empty_df, empty_df
 
-    # We no longer build curriculum here, it will be handled in preprocess.
-    # We return an empty dataframe for it to maintain the tuple structure for unpacking.
     curriculum_df = pd.DataFrame() 
     
     print("✅ Loaded all data from Excel file successfully.")
@@ -55,7 +53,6 @@ def int_safe(x, default=0):
     try: return int(x)
     except: return default
 
-# *** THIS IS THE FIXED FUNCTION ***
 def compatible_room(course_type, room_type):
     c, r = (course_type or "").lower(), (room_type or "").lower()
 
@@ -67,7 +64,6 @@ def compatible_room(course_type, room_type):
     if "lec" in c and ("classroom" in r or "hall" in r or "theater" in r):
         return True
 
-    # --- THE FIX ---
     # Allow 'lab' courses (like CSC317) to also be in large rooms
     if "lab" in c and ("classroom" in r or "hall" in r or "theater" in r):
         return True
@@ -77,7 +73,6 @@ def compatible_room(course_type, room_type):
         return True
 
     return False
-# *** END OF FIXED FUNCTION ***
 
 # -------------------------
 # Preprocess (FIXED column names)
@@ -89,14 +84,10 @@ def preprocess(courses_df, instructors_df, rooms_df, timeslots_df, sections_df, 
         ctype = safe_str(r.get("Type", "")).lower()
         if not cid: continue
         
-        # *** BUG FIX HERE ***
-        # If a course (like CNC311) is already in the dict as a "lecture",
-        # do NOT overwrite it with the "lab" entry that comes after it.
         if cid in courses and courses[cid]["type"] == "lecture":
             pass # Keep the "lecture" type
         else:
             courses[cid] = {"name": safe_str(r.get("CourseName")), "type": ctype}
-        # *** END OF FIX ***
 
     instructors = {}
     for _, r in instructors_df.iterrows():
@@ -172,7 +163,6 @@ class LectureVar:
 def build_vars_domains(courses, instructors, rooms, timeslots, lecture_groups):
     variables, domains = [], {}
     
-    # *** GROUPING LOGIC FIX ***
     # Iterate over 'lecture_groups' instead of 'sections'
     for group in lecture_groups:
         year, students, group_name = group["year"], group["students"], group["group_name"]
@@ -204,7 +194,7 @@ def build_vars_domains(courses, instructors, rooms, timeslots, lecture_groups):
                         is_preferred = t in i_info["prefs"]
                         
                         if not is_qualified:
-                           continue
+                            continue
                         
                         dom.append((t, r_id, instr_id, is_qualified, is_preferred))
                         
@@ -264,7 +254,6 @@ def solve_timetable(variables, domains):
 # Export CSV
 # -------------------------
 def export_results(assigned, failed, timeslot_info, instructors):
-    # --- Successful Assignments ---
     rows = []
     for v, val in assigned.items():
         if not val: continue
@@ -308,12 +297,10 @@ def main():
         return
 
     print("⚙️ Preprocessing data ...")
-    # *** GROUPING LOGIC FIX *** (Return 'lecture_groups' instead of 'sections')
     courses, instructors, rooms, timeslots, t_info, lecture_groups = preprocess(*all_data)
     print(f"📊 Data ready: {len(courses)} courses, {len(instructors)} instructors, {len(rooms)} rooms, {len(timeslots)} timeslots.")
 
     print("🧩 Building variables and domains ...")
-    # *** GROUPING LOGIC FIX *** (Pass 'lecture_groups')
     variables, domains = build_vars_domains(courses, instructors, rooms, timeslots, lecture_groups)
     print(f"✅ Created {len(variables)} lecture variables to schedule.")
     

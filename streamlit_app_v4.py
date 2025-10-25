@@ -32,7 +32,7 @@ def compatible_room(course_type, room_type):
 class LectureVar:
     def __init__(self, course, group_name, year, students, section_display_name):
         self.course = course
-        self.group_name = group_name  # Internal ID, e.g., "1_1"
+        self.group_name = group_name 
         self.year = year
         self.students = students
         self.section_display_name = section_display_name # Display string, e.g., "(Sec 1, 2, 3)"
@@ -57,7 +57,7 @@ def load_tables_excel(uploaded_file):
         return (pd.DataFrame(),) * 6
 
 # -------------------------
-# Preprocess (***UPDATED***)
+# Preprocess
 # -------------------------
 def preprocess(courses_df, instructors_df, rooms_df, timeslots_df, sections_df, curriculum_df):
     courses = {}
@@ -262,7 +262,7 @@ def format_as_grid_tables(solution_df, timeslot_info):
         try:
             pivot_table = year_df.pivot_table(
                 index='TimeSlot', columns='Day', values='Display',
-                aggfunc=lambda x: "".join(x) # Join without <br>, let flexbox handle it
+                aggfunc=lambda x: "".join(x)
             )
         except Exception:
             continue
